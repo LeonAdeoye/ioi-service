@@ -1,9 +1,21 @@
 package com.leon.model
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import java.util.UUID
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class IoiRequest(
-    val symbol: String,
+    val ric: String,
     val quantity: Long,
-    val side: String,
+    val side: Side,
     val price: Double?,
-    val clientId: String
+    val clientIds: List<String> = emptyList(),
+    val BloombergQualifier: String = "",
+    val timestamp: Long,
+    val lifeTimeInMinutes: Long,
+    val comment: String = "",
+    val requestId: UUID,
+    val ioiFlags: List<String> = emptyList(),
+    val originalMarket: String,
+    val originalOrderType: OrderType
 )
