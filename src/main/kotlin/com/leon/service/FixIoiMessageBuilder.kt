@@ -4,10 +4,10 @@ import com.leon.model.IoiRequest
 import com.leon.model.Side
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import quickfix.field.IOIID
 import quickfix.field.IOIQty
-import quickfix.field.IOITransType
-import quickfix.field.IOIid
 import quickfix.field.IOIQualifier
+import quickfix.field.IOITransType
 import quickfix.field.Price
 import quickfix.field.SenderCompID
 import quickfix.field.Symbol
@@ -16,8 +16,9 @@ import quickfix.field.Text
 import quickfix.field.ValidUntilTime
 import quickfix.fix44.IndicationOfInterest
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
-import java.util.Date
 
 @Service
 class FixIoiMessageBuilder
@@ -34,7 +35,7 @@ class FixIoiMessageBuilder
         }
 
         val message = IndicationOfInterest(
-            IOIid(request.requestId.toString()),
+            IOIID(request.requestId.toString()),
             IOITransType(IOITransType.NEW),
             side,
             IOIQty(request.quantity.toString())
@@ -52,10 +53,14 @@ class FixIoiMessageBuilder
             message.set(Text(commentParts.joinToString("; ")))
 
         if (request.BloombergQualifier.isNotBlank())
-            message.set(IOIQualifier(request.BloombergQualifier[0]))
+        {
+            val qualifierGroup = IndicationOfInterest.NoIOIQualifiers()
+            qualifierGroup.set(IOIQualifier(request.BloombergQualifier[0]))
+            message.addGroup(qualifierGroup)
+        }
 
         val validUntil = Instant.ofEpochMilli(request.timestamp).plus(request.lifeTimeInMinutes, ChronoUnit.MINUTES)
-        message.set(ValidUntilTime(Date.from(validUntil)))
+        message.set(ValidUntilTime(LocalDateTime.ofInstant(validUntil, ZoneOffset.UTC)))
 
         message.header.setField(SenderCompID("IOI_SERVICE"))
         message.header.setField(TargetCompID("FIX_GATEWAY"))

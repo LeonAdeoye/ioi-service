@@ -17,8 +17,8 @@ import com.leon.rule.NoStopLossRule
 import com.leon.rule.PriceDeviationRule
 import org.jeasy.rules.api.Facts
 import org.jeasy.rules.api.Rules
+import org.jeasy.rules.api.RulesEngineParameters
 import org.jeasy.rules.core.DefaultRulesEngine
-import org.jeasy.rules.core.RulesEngineParameters
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -88,7 +88,7 @@ class RulesEngine(
         facts.put("marketPrice", marketPrice)
         facts.put("notionalUsd", notionalUsd)
 
-        val rules = Rules()
+        val rules = Rules(*emptyArray<Any>())
         rules.register(NoMarketOrdersRule())
         rules.register(NoShortSellsRule())
         rules.register(NoStopLossRule())
