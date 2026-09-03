@@ -135,7 +135,8 @@ class IoiBlockingService
                 ric = request.ric,
                 originalMarket = request.originalMarket,
                 reason = reason,
-                timestamp = request.timestamp
+                timestamp = request.timestamp,
+                source = request.source
             )
         )
         logger.info("IOI request {} blocked: {}", request.requestId, reason)

@@ -18,5 +18,6 @@ data class IoiRequest(
     val requestId: UUID,
     val ioiFlags: List<String> = emptyList(),
     val originalMarket: String,
-    val originalOrderType: OrderType
+    val originalOrderType: OrderType,
+    val source: String = "REST"
 )

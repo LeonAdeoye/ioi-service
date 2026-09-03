@@ -21,13 +21,13 @@ class IoiIngestService(
         ioiDisruptorStarter.push(DisruptorPayload(PAYLOAD_TYPE, json))
     }
 
-    fun enqueueAll(requests: List<IoiRequest>): Int
+    fun enqueueAll(requests: List<IoiRequest>, source: String): Int
     {
-        requests.forEach { enqueue(it) }
+        requests.forEach { enqueue(it.copy(source = source)) }
         return requests.size
     }
 
-    fun enqueueJson(json: String): Int
+    fun enqueueJson(json: String, source: String): Int
     {
         return try
         {
@@ -38,12 +38,12 @@ class IoiIngestService(
                 {
                     var count = 0
                     node.forEach { element ->
-                        if (enqueueNode(element))
+                        if (enqueueNode(element, source))
                             count++
                     }
                     count
                 }
-                node.isObject -> if (enqueueNode(node)) 1 else 0
+                node.isObject -> if (enqueueNode(node, source)) 1 else 0
                 else ->
                 {
                     logger.warn("Unsupported IOI JSON payload shape")
@@ -58,12 +58,12 @@ class IoiIngestService(
         }
     }
 
-    private fun enqueueNode(node: JsonNode): Boolean
+    private fun enqueueNode(node: JsonNode, source: String): Boolean
     {
         return try
         {
             val request = objectMapper.treeToValue(node, IoiRequest::class.java)
-            enqueue(request)
+            enqueue(request.copy(source = source))
             true
         }
         catch (e: Exception)

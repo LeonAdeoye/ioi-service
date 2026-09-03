@@ -6,5 +6,6 @@ data class IoiFailure(
     val ric: String,
     val originalMarket: String,
     val reason: String,
-    val timestamp: Long
+    val timestamp: Long,
+    val source: String
 )

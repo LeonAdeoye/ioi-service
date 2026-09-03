@@ -37,7 +37,7 @@ class IoiController(
     fun processBulkIois(@RequestBody requests: List<IoiRequest>): IoiBulkAccepted
     {
         logger.info("Received bulk IOI process request with {} item(s)", requests.size)
-        val accepted = ioiIngestService.enqueueAll(requests)
+        val accepted = ioiIngestService.enqueueAll(requests, "REST")
         return IoiBulkAccepted(accepted)
     }
 

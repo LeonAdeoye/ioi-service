@@ -44,7 +44,8 @@ class IoiStatsService
                 ric = request.ric,
                 originalMarket = request.originalMarket,
                 reason = reason,
-                timestamp = request.timestamp
+                timestamp = request.timestamp,
+                source = request.source
             )
         )
     }

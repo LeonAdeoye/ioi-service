@@ -135,7 +135,8 @@ class RulesEngine(
             comment = request.comment,
             requestId = request.requestId,
             ioiFlags = request.ioiFlags,
-            fixMessage = fixMessage
+            fixMessage = fixMessage,
+            source = request.source
         )
     }
 }

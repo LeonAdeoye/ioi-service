@@ -66,7 +66,7 @@ class AmpsSubscriberService(private val ioiIngestService: IoiIngestService)
                 if (data.isNullOrBlank())
                     continue
 
-                val accepted = ioiIngestService.enqueueJson(data)
+                val accepted = ioiIngestService.enqueueJson(data, "AMPS")
                 logger.info("Enqueued {} IOI request(s) from AMPS topic {}", accepted, topicName)
             }
         }

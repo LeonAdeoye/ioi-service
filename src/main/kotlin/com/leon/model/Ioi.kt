@@ -17,5 +17,6 @@ data class Ioi(
     val comment: String,
     val requestId: UUID,
     val ioiFlags: List<String>,
-    val fixMessage: String
+    val fixMessage: String,
+    val source: String
 )
