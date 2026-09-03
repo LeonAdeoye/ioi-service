@@ -13,11 +13,12 @@ data class IoiRequest(
     val clientIds: List<String> = emptyList(),
     val BloombergQualifier: String = "",
     val timestamp: Long,
-    val lifeTimeInMinutes: Long,
+    val lifeTimeInMinutes: Long? = null,
     val comment: String = "",
     val requestId: UUID,
     val ioiFlags: List<String> = emptyList(),
     val originalMarket: String,
     val originalOrderType: OrderType,
-    val source: String = "REST"
+    val source: String = "REST",
+    val originalQuantity: Long? = null
 )

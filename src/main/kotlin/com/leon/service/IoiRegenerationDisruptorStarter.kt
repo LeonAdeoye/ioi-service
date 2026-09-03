@@ -2,7 +2,7 @@ package com.leon.service
 
 import com.leon.disruptors.DisruptorPayload
 import com.leon.disruptors.DisruptorService
-import com.leon.handlers.IoiProcessingEventHandler
+import com.leon.handlers.IoiRegenerationEventHandler
 import com.leon.handlers.JournalEventHandler
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
@@ -11,20 +11,20 @@ import org.springframework.beans.factory.ObjectProvider
 import org.springframework.stereotype.Service
 
 @Service
-class IoiDisruptorStarter(
+class IoiRegenerationDisruptorStarter(
     disruptorServiceProvider: ObjectProvider<DisruptorService>,
     private val journalEventHandler: JournalEventHandler,
-    private val ioiProcessingEventHandler: IoiProcessingEventHandler
+    private val ioiRegenerationEventHandler: IoiRegenerationEventHandler
 )
 {
-    private val logger = LoggerFactory.getLogger(IoiDisruptorStarter::class.java)
+    private val logger = LoggerFactory.getLogger(IoiRegenerationDisruptorStarter::class.java)
     private val disruptorService = disruptorServiceProvider.getObject()
 
     @PostConstruct
     fun start()
     {
-        disruptorService.start("INBOUND", journalEventHandler, ioiProcessingEventHandler)
-        logger.info("Inbound IOI disruptor started")
+        disruptorService.start("REGEN", journalEventHandler, ioiRegenerationEventHandler)
+        logger.info("Regeneration IOI disruptor started")
     }
 
     fun push(payload: DisruptorPayload)
@@ -36,6 +36,6 @@ class IoiDisruptorStarter(
     fun stop()
     {
         disruptorService.stop()
-        logger.info("Inbound IOI disruptor stopped")
+        logger.info("Regeneration IOI disruptor stopped")
     }
 }

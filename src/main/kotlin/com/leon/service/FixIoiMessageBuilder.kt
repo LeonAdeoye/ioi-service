@@ -27,6 +27,16 @@ class FixIoiMessageBuilder
 
     fun build(request: IoiRequest): String
     {
+        return build(request, IOITransType.NEW)
+    }
+
+    fun buildCancel(request: IoiRequest): String
+    {
+        return build(request, IOITransType.CANCEL)
+    }
+
+    private fun build(request: IoiRequest, transType: Char): String
+    {
         val side = when (request.side)
         {
             Side.BUY -> quickfix.field.Side(quickfix.field.Side.BUY)
@@ -36,7 +46,7 @@ class FixIoiMessageBuilder
 
         val message = IndicationOfInterest(
             IOIID(request.requestId.toString()),
-            IOITransType(IOITransType.NEW),
+            IOITransType(transType),
             side,
             IOIQty(request.quantity.toString())
         )
@@ -59,14 +69,19 @@ class FixIoiMessageBuilder
             message.addGroup(qualifierGroup)
         }
 
-        val validUntil = Instant.ofEpochMilli(request.timestamp).plus(request.lifeTimeInMinutes, ChronoUnit.MINUTES)
-        message.set(ValidUntilTime(LocalDateTime.ofInstant(validUntil, ZoneOffset.UTC)))
+        val lifetime = request.lifeTimeInMinutes ?: 0L
+        if (transType == IOITransType.NEW && lifetime > 0L)
+        {
+            val validUntil = Instant.ofEpochMilli(request.timestamp).plus(lifetime, ChronoUnit.MINUTES)
+            message.set(ValidUntilTime(LocalDateTime.ofInstant(validUntil, ZoneOffset.UTC)))
+        }
 
         message.header.setField(SenderCompID("IOI_SERVICE"))
         message.header.setField(TargetCompID("FIX_GATEWAY"))
 
         val fixMessage = message.toString()
-        logger.info("Generated FIX IOI for request {}: {}", request.requestId, fixMessage.replace('\u0001', '|'))
+        val label = if (transType == IOITransType.CANCEL) "CANCEL" else "NEW"
+        logger.info("Generated FIX IOI {} for request {}: {}", label, request.requestId, fixMessage.replace('\u0001', '|'))
         return fixMessage
     }
 }

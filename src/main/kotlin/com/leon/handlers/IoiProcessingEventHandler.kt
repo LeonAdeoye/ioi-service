@@ -3,6 +3,7 @@ package com.leon.handlers
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.leon.disruptors.DisruptorEvent
 import com.leon.model.IoiRequest
+import com.leon.service.IoiIngestService
 import com.leon.service.RulesEngine
 import com.lmax.disruptor.EventHandler
 import org.slf4j.LoggerFactory
@@ -18,8 +19,12 @@ class IoiProcessingEventHandler(
 
     override fun onEvent(event: DisruptorEvent, sequence: Long, endOfBatch: Boolean)
     {
-        val json = event.payload?.payload
-        if (json.isNullOrBlank())
+        val payload = event.payload ?: return
+        if (payload.payloadType.isNotBlank() && payload.payloadType != IoiIngestService.PAYLOAD_TYPE)
+            return
+
+        val json = payload.payload
+        if (json.isBlank())
             return
 
         try

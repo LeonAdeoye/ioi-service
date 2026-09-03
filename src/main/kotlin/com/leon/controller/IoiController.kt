@@ -1,10 +1,10 @@
 package com.leon.controller
 
 import com.leon.config.IoiProperties
-import com.leon.config.RuleThresholds
 import com.leon.model.IoiBulkAccepted
 import com.leon.model.IoiRequest
 import com.leon.model.IoiResponse
+import com.leon.model.IoiRuntimeConfig
 import com.leon.service.IoiIngestService
 import com.leon.service.IoiRuleConfigService
 import com.leon.service.RulesEngine
@@ -42,10 +42,14 @@ class IoiController(
     }
 
     @GetMapping("/reconfigure")
-    fun reconfigure(): RuleThresholds
+    fun reconfigure(): IoiRuntimeConfig
     {
-        logger.info("Received request to reconfigure IOI rule thresholds")
+        logger.info("Received request to reconfigure IOI rule thresholds and regeneration settings")
         ioiRuleConfigService.reconfigure()
-        return properties.rules
+        return IoiRuntimeConfig(
+            rules = properties.rules,
+            defaultLifetimeMinutes = properties.defaultLifetimeMinutes,
+            regenerationIntervalSeconds = properties.regenerationIntervalSeconds
+        )
     }
 }

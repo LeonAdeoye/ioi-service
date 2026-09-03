@@ -4,6 +4,7 @@ import com.leon.model.ExchangeDto
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.time.DayOfWeek
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
@@ -65,6 +66,25 @@ class MarketHoursService(private val domainServiceClient: DomainServiceClient)
     {
         val currency = getExchange(acronym)?.currency
         return if (currency.isNullOrBlank()) "USD" else currency
+    }
+
+    fun openMinutes(acronym: String): Long
+    {
+        val exchange = getExchange(acronym) ?: return 0L
+        val open = parseTime(exchange.openTime.orEmpty()) ?: return 0L
+        val close = parseTime(exchange.closeTime.orEmpty()) ?: return 0L
+        var sessionMinutes = Duration.between(open, close).toMinutes()
+        if (sessionMinutes <= 0)
+            sessionMinutes += Duration.ofHours(24).toMinutes()
+
+        val lunchStart = parseTime(exchange.lunchStart.orEmpty())
+        val lunchEnd = parseTime(exchange.lunchEnd.orEmpty())
+        val lunchMinutes = if (lunchStart != null && lunchEnd != null)
+            Duration.between(lunchStart, lunchEnd).toMinutes().coerceAtLeast(0)
+        else
+            0L
+
+        return (sessionMinutes - lunchMinutes).coerceAtLeast(0L)
     }
 
     private fun localDateTime(exchange: ExchangeDto, epochMillis: Long): ZonedDateTime
