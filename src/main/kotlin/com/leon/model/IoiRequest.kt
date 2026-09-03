@@ -6,6 +6,7 @@ import java.util.UUID
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IoiRequest(
     val ric: String,
+    val trader: String = "",
     val quantity: Long,
     val side: Side,
     val price: Double?,

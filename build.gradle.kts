@@ -27,6 +27,7 @@ dependencies {
     implementation("org.quickfixj:quickfixj-core:3.0.1")
     implementation("org.quickfixj:quickfixj-messages-fix44:3.0.1")
     implementation("com.crankuptheamps:amps-client:5.3.3.0")
+    implementation("com.lmax:disruptor:3.4.4")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.mockk:mockk:1.13.8")
 }

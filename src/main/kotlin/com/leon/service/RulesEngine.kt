@@ -5,6 +5,9 @@ import com.leon.model.Ioi
 import com.leon.model.IoiRequest
 import com.leon.model.IoiResponse
 import com.leon.model.RuleEvaluation
+import com.leon.rule.BlockedMarketRule
+import com.leon.rule.BlockedStockRule
+import com.leon.rule.BlockedTraderRule
 import com.leon.rule.MinAdvPercentageRule
 import com.leon.rule.MinNotionalRule
 import com.leon.rule.MinQuantityRule
@@ -29,7 +32,9 @@ class RulesEngine(
     private val exchangeServiceClient: ExchangeServiceClient,
     private val marketHoursService: MarketHoursService,
     private val fixIoiMessageBuilder: FixIoiMessageBuilder,
-    private val ampsPublisherService: AmpsPublisherService
+    private val ampsPublisherService: AmpsPublisherService,
+    private val ioiStatsService: IoiStatsService,
+    private val ioiBlockingService: IoiBlockingService
 )
 {
     private val logger = LoggerFactory.getLogger(RulesEngine::class.java)
@@ -44,6 +49,7 @@ class RulesEngine(
         {
             val ioi = generateIoi(request)
             ampsPublisherService.publishFixIoi(request.requestId.toString(), request.ric, ioi.fixMessage)
+            ioiStatsService.recordCreated(request)
             logger.info("Approved IOI request {}", request.requestId)
             IoiResponse(
                 requestId = request.requestId.toString(),
@@ -53,11 +59,13 @@ class RulesEngine(
         }
         else
         {
-            logger.info("Rejected IOI request {}: {}", request.requestId, evaluation.reason)
+            val reason = evaluation.reason ?: "Request did not meet criteria"
+            ioiStatsService.recordUnapproved(request, reason)
+            logger.info("Rejected IOI request {}: {}", request.requestId, reason)
             IoiResponse(
                 requestId = request.requestId.toString(),
                 approved = false,
-                reason = evaluation.reason ?: "Request did not meet criteria"
+                reason = reason
             )
         }
     }
@@ -87,8 +95,12 @@ class RulesEngine(
         facts.put("advPercentage", advPercentage)
         facts.put("marketPrice", marketPrice)
         facts.put("notionalUsd", notionalUsd)
+        facts.put("blockingService", ioiBlockingService)
 
         val rules = Rules(*emptyArray<Any>())
+        rules.register(BlockedTraderRule())
+        rules.register(BlockedStockRule())
+        rules.register(BlockedMarketRule())
         rules.register(NoMarketOrdersRule())
         rules.register(NoShortSellsRule())
         rules.register(NoStopLossRule())
@@ -110,6 +122,7 @@ class RulesEngine(
         val fixMessage = fixIoiMessageBuilder.build(request)
         return Ioi(
             ric = request.ric,
+            trader = request.trader,
             quantity = request.quantity,
             side = request.side,
             price = request.price,

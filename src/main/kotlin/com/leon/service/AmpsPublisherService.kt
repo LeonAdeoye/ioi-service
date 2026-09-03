@@ -16,10 +16,10 @@ class AmpsPublisherService(private val objectMapper: ObjectMapper)
     @Value("\${amps.server.url}")
     private lateinit var serverUrl: String
 
-    @Value("\${amps.topic.name}")
+    @Value("\${amps.outbound.topic.name}")
     private lateinit var topicName: String
 
-    @Value("\${amps.client.name:IoiPublisher}")
+    @Value("\${amps.outbound.client.name:IoiPublisher}")
     private lateinit var clientName: String
 
     @Value("\${amps.enabled:true}")
