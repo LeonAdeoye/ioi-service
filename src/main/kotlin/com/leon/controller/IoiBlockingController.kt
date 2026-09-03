@@ -1,5 +1,6 @@
 package com.leon.controller
 
+import com.leon.model.IoiBlockedFailure
 import com.leon.model.IoiFailure
 import com.leon.service.IoiBlockingService
 import org.slf4j.LoggerFactory
@@ -92,6 +93,12 @@ class IoiBlockingController(private val ioiBlockingService: IoiBlockingService)
     fun blockedByMarketCount(): Map<String, Long>
     {
         return ioiBlockingService.getBlockedByMarketCount()
+    }
+
+    @GetMapping("/failures")
+    fun blockedFailures(): List<IoiBlockedFailure>
+    {
+        return ioiBlockingService.getAllBlockedFailures()
     }
 
     @GetMapping("/failures/trader")

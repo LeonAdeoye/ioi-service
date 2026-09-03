@@ -37,7 +37,8 @@ class RulesEngine(
     private val ampsPublisherService: AmpsPublisherService,
     private val ioiStatsService: IoiStatsService,
     private val ioiBlockingService: IoiBlockingService,
-    private val liveIoiRegistry: LiveIoiRegistry
+    private val liveIoiRegistry: LiveIoiRegistry,
+    private val ioiBookService: IoiBookService
 )
 {
     private val logger = LoggerFactory.getLogger(RulesEngine::class.java)
@@ -54,6 +55,7 @@ class RulesEngine(
             val ioi = generateIoi(resolved)
             ampsPublisherService.publishFixIoi(resolved.requestId.toString(), resolved.ric, ioi.fixMessage)
             ioiStatsService.recordCreated(resolved)
+            ioiBookService.add(ioi)
             registerIfRegenerating(resolved)
             logger.info("Approved IOI request {}", resolved.requestId)
             IoiResponse(

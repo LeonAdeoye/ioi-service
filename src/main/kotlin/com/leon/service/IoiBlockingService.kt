@@ -1,5 +1,6 @@
 package com.leon.service
 
+import com.leon.model.IoiBlockedFailure
 import com.leon.model.IoiFailure
 import com.leon.model.IoiRequest
 import org.slf4j.LoggerFactory
@@ -117,6 +118,27 @@ class IoiBlockingService
     fun getBlockedByMarketFailures(): List<IoiFailure>
     {
         return blockedByMarketFailures.toList()
+    }
+
+    fun getAllBlockedFailures(): List<IoiBlockedFailure>
+    {
+        return blockedByTraderFailures.map { toBlocked(it, "TRADER") } +
+            blockedByStockFailures.map { toBlocked(it, "STOCK") } +
+            blockedByMarketFailures.map { toBlocked(it, "MARKET") }
+    }
+
+    private fun toBlocked(failure: IoiFailure, blockType: String): IoiBlockedFailure
+    {
+        return IoiBlockedFailure(
+            requestId = failure.requestId,
+            trader = failure.trader,
+            ric = failure.ric,
+            originalMarket = failure.originalMarket,
+            reason = failure.reason,
+            timestamp = failure.timestamp,
+            source = failure.source,
+            blockType = blockType
+        )
     }
 
     private fun recordBlocked(

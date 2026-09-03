@@ -7,6 +7,7 @@ import com.leon.model.IoiRegenerationCommand
 import com.leon.model.IoiRequest
 import com.leon.service.AmpsPublisherService
 import com.leon.service.FixIoiMessageBuilder
+import com.leon.service.IoiBookService
 import com.leon.service.IoiIngestService
 import com.leon.service.IoiRegenerationService
 import com.lmax.disruptor.EventHandler
@@ -19,7 +20,8 @@ class IoiRegenerationEventHandler(
     private val objectMapper: ObjectMapper,
     private val fixIoiMessageBuilder: FixIoiMessageBuilder,
     private val ampsPublisherService: AmpsPublisherService,
-    private val ioiIngestService: IoiIngestService
+    private val ioiIngestService: IoiIngestService,
+    private val ioiBookService: IoiBookService
 ) : EventHandler<DisruptorEvent>
 {
     private val logger = LoggerFactory.getLogger(IoiRegenerationEventHandler::class.java)
@@ -58,6 +60,7 @@ class IoiRegenerationEventHandler(
     {
         val fixMessage = fixIoiMessageBuilder.buildCancel(request)
         ampsPublisherService.publishFixIoi(request.requestId.toString(), request.ric, fixMessage)
+        ioiBookService.markCancelled(request.requestId)
         logger.info("Published FIX CANCEL for IOI {}", request.requestId)
     }
 

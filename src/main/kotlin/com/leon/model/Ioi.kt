@@ -18,5 +18,6 @@ data class Ioi(
     val requestId: UUID,
     val ioiFlags: List<String>,
     val fixMessage: String,
-    val source: String
+    val source: String,
+    val status: String = "LIVE"
 )

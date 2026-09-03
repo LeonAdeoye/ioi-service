@@ -41,4 +41,10 @@ class LiveIoiRegistry
     {
         return pendingAfterLunch.remove(requestId)
     }
+
+    fun clearAll()
+    {
+        live.clear()
+        pendingAfterLunch.clear()
+    }
 }
