@@ -16,7 +16,7 @@ class IoiLifecycleService(
 {
     private val logger = LoggerFactory.getLogger(IoiLifecycleService::class.java)
 
-    fun cancel(requestId: UUID): Boolean
+    fun cancel(requestId: UUID, manual: Boolean = false): Boolean
     {
         val ioi = ioiBookService.get(requestId)
         val live = liveIoiRegistry.removeLive(requestId)
@@ -30,8 +30,8 @@ class IoiLifecycleService(
         }
 
         publishCancel(request)
-        ioiBookService.markCancelled(requestId)
-        logger.info("Cancelled IOI {}", requestId)
+        ioiBookService.markCancelled(requestId, manual)
+        logger.info("Cancelled IOI {} manual={}", requestId, manual)
         return true
     }
 
@@ -81,8 +81,8 @@ class IoiLifecycleService(
         }
 
         liveIoiRegistry.clearAll()
-        ioiBookService.clear()
-        logger.info("Deleted all IOIs; cancelled {}", cancelledIds.size)
+        ioiBookService.clearLive()
+        logger.info("Deleted all live IOIs; cancelled {}", cancelledIds.size)
         return cancelledIds.size
     }
 

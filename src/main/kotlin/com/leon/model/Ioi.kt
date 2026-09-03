@@ -19,5 +19,6 @@ data class Ioi(
     val ioiFlags: List<String>,
     val fixMessage: String,
     val source: String,
-    val status: String = "LIVE"
+    val status: String = "LIVE",
+    val cancelReason: String? = null
 )

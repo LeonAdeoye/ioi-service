@@ -12,7 +12,7 @@ class IoiBookService
 
     fun add(ioi: Ioi)
     {
-        created[ioi.requestId] = ioi.copy(status = "LIVE")
+        created[ioi.requestId] = ioi.copy(status = "LIVE", cancelReason = null)
     }
 
     fun get(requestId: UUID): Ioi?
@@ -27,19 +27,40 @@ class IoiBookService
 
     fun getLive(): List<Ioi>
     {
-        return created.values.filter { it.status == "LIVE" }
+        return created.values.filter { it.status == "LIVE" }.distinctBy { it.requestId }
     }
 
-    fun markCancelled(requestId: UUID): Ioi?
+    fun getManuallyCancelled(): List<Ioi>
+    {
+        return created.values.filter { it.status == "CANCELLED" && it.cancelReason == MANUAL }
+    }
+
+    fun markCancelled(requestId: UUID, manual: Boolean = false): Ioi?
     {
         val current = created[requestId] ?: return null
-        val cancelled = current.copy(status = "CANCELLED")
-        created[requestId] = cancelled
-        return cancelled
+        if (manual)
+        {
+            val cancelled = current.copy(status = "CANCELLED", cancelReason = MANUAL)
+            created[requestId] = cancelled
+            return cancelled
+        }
+
+        created.remove(requestId)
+        return current.copy(status = "CANCELLED")
+    }
+
+    fun clearLive()
+    {
+        created.entries.removeIf { it.value.status == "LIVE" }
     }
 
     fun clear()
     {
         created.clear()
+    }
+
+    companion object
+    {
+        const val MANUAL = "MANUAL"
     }
 }

@@ -60,7 +60,7 @@ class IoiRegenerationEventHandler(
     {
         val fixMessage = fixIoiMessageBuilder.buildCancel(request)
         ampsPublisherService.publishFixIoi(request.requestId.toString(), request.ric, fixMessage)
-        ioiBookService.markCancelled(request.requestId)
+        ioiBookService.markCancelled(request.requestId, false)
         logger.info("Published FIX CANCEL for IOI {}", request.requestId)
     }
 

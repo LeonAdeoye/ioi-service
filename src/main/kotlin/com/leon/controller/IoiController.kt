@@ -53,7 +53,19 @@ class IoiController(
     @GetMapping("/created")
     fun getCreatedIois(): List<Ioi>
     {
-        return ioiBookService.getAll()
+        return ioiBookService.getLive()
+    }
+
+    @GetMapping("/live")
+    fun getLiveIois(): List<Ioi>
+    {
+        return ioiBookService.getLive()
+    }
+
+    @GetMapping("/cancelled")
+    fun getCancelledIois(): List<Ioi>
+    {
+        return ioiBookService.getManuallyCancelled()
     }
 
     @DeleteMapping("/all")
@@ -68,7 +80,7 @@ class IoiController(
     fun cancelIoi(@PathVariable requestId: UUID): IoiResponse
     {
         logger.info("Received request to cancel IOI {}", requestId)
-        val cancelled = ioiLifecycleService.cancel(requestId)
+        val cancelled = ioiLifecycleService.cancel(requestId, true)
         return IoiResponse(
             requestId = requestId.toString(),
             approved = cancelled,
