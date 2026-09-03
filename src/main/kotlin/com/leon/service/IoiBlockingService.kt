@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicLong
 
 @Service
-class IoiBlockingService
+class IoiBlockingService(private val ioiLifecycleService: IoiLifecycleService)
 {
     private val logger = LoggerFactory.getLogger(IoiBlockingService::class.java)
     private val blockedTraders = ConcurrentHashMap.newKeySet<String>()
@@ -27,7 +27,8 @@ class IoiBlockingService
     fun blockTrader(trader: String)
     {
         blockedTraders.add(trader)
-        logger.info("Blocked trader: {}", trader)
+        val cancelled = ioiLifecycleService.cancelMatching { it.trader == trader }
+        logger.info("Blocked trader: {}; cancelled {} live IOIs", trader, cancelled)
     }
 
     fun unblockTrader(trader: String)
@@ -39,7 +40,8 @@ class IoiBlockingService
     fun blockStock(stock: String)
     {
         blockedStocks.add(stock)
-        logger.info("Blocked stock: {}", stock)
+        val cancelled = ioiLifecycleService.cancelMatching { it.ric == stock }
+        logger.info("Blocked stock: {}; cancelled {} live IOIs", stock, cancelled)
     }
 
     fun unblockStock(stock: String)
@@ -51,7 +53,8 @@ class IoiBlockingService
     fun blockMarket(market: String)
     {
         blockedMarkets.add(market)
-        logger.info("Blocked market: {}", market)
+        val cancelled = ioiLifecycleService.cancelMatching { it.originalMarket == market }
+        logger.info("Blocked market: {}; cancelled {} live IOIs", market, cancelled)
     }
 
     fun unblockMarket(market: String)

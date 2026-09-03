@@ -35,6 +35,32 @@ class IoiLifecycleService(
         return true
     }
 
+    fun cancelMatching(matches: (IoiRequest) -> Boolean): Int
+    {
+        val requestIds = linkedSetOf<UUID>()
+
+        liveIoiRegistry.snapshotLive()
+            .filter { matches(it.request) }
+            .forEach { requestIds.add(it.request.requestId) }
+
+        liveIoiRegistry.snapshotPendingAfterLunch()
+            .filter { matches(it.request) }
+            .forEach { requestIds.add(it.request.requestId) }
+
+        ioiBookService.getLive()
+            .filter { matches(toRequest(it)) }
+            .forEach { requestIds.add(it.requestId) }
+
+        var cancelled = 0
+        requestIds.forEach { requestId ->
+            if (cancel(requestId))
+                cancelled++
+        }
+
+        logger.info("Cancelled {} matching live IOIs", cancelled)
+        return cancelled
+    }
+
     fun deleteAll(): Int
     {
         val live = liveIoiRegistry.snapshotLive()
