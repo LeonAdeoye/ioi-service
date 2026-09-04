@@ -27,8 +27,6 @@
         <appender-ref ref="FILE" />
     </root>
 
-    <logger level="TRACE" name="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"/>
-
     <logger name="com.leon" level="INFO"/>
 
 </configuration>
