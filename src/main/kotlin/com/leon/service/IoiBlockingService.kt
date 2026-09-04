@@ -1,8 +1,11 @@
 package com.leon.service
 
+import com.leon.model.IoiBlock
 import com.leon.model.IoiBlockedFailure
 import com.leon.model.IoiFailure
 import com.leon.model.IoiRequest
+import com.leon.repository.IoiBlockRepository
+import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
@@ -10,12 +13,12 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicLong
 
 @Service
-class IoiBlockingService(private val ioiLifecycleService: IoiLifecycleService)
+class IoiBlockingService(private val ioiLifecycleService: IoiLifecycleService, private val ioiBlockRepository: IoiBlockRepository)
 {
     private val logger = LoggerFactory.getLogger(IoiBlockingService::class.java)
-    private val blockedTraders = ConcurrentHashMap.newKeySet<String>()
-    private val blockedStocks = ConcurrentHashMap.newKeySet<String>()
-    private val blockedMarkets = ConcurrentHashMap.newKeySet<String>()
+    private val blockedTraders = ConcurrentHashMap<String, IoiBlock>()
+    private val blockedStocks = ConcurrentHashMap<String, IoiBlock>()
+    private val blockedMarkets = ConcurrentHashMap<String, IoiBlock>()
 
     private val blockedByTraderCount = ConcurrentHashMap<String, AtomicLong>()
     private val blockedByStockCount = ConcurrentHashMap<String, AtomicLong>()
@@ -24,9 +27,24 @@ class IoiBlockingService(private val ioiLifecycleService: IoiLifecycleService)
     private val blockedByStockFailures = ConcurrentLinkedQueue<IoiFailure>()
     private val blockedByMarketFailures = ConcurrentLinkedQueue<IoiFailure>()
 
-    fun blockTrader(trader: String)
+    @PostConstruct
+    fun loadPersistedBlocks()
     {
-        blockedTraders.add(trader)
+        try
+        {
+            val blocks = ioiBlockRepository.findAll()
+            blocks.forEach { putInCache(it) }
+            logger.info("Loaded {} IOI blocks from MongoDB", blocks.size)
+        }
+        catch (e: Exception)
+        {
+            logger.warn("Failed to load IOI blocks from MongoDB: {}", e.message)
+        }
+    }
+
+    fun blockTrader(trader: String, userId: String)
+    {
+        blockedTraders[trader] = persistBlock("TRADER", trader, userId)
         val cancelled = ioiLifecycleService.cancelMatching { it.trader == trader }
         logger.info("Blocked trader: {}; cancelled {} live IOIs", trader, cancelled)
     }
@@ -34,12 +52,13 @@ class IoiBlockingService(private val ioiLifecycleService: IoiLifecycleService)
     fun unblockTrader(trader: String)
     {
         blockedTraders.remove(trader)
+        deletePersisted("TRADER", trader)
         logger.info("Unblocked trader: {}", trader)
     }
 
-    fun blockStock(stock: String)
+    fun blockStock(stock: String, userId: String)
     {
-        blockedStocks.add(stock)
+        blockedStocks[stock] = persistBlock("STOCK", stock, userId)
         val cancelled = ioiLifecycleService.cancelMatching { it.ric == stock }
         logger.info("Blocked stock: {}; cancelled {} live IOIs", stock, cancelled)
     }
@@ -47,12 +66,13 @@ class IoiBlockingService(private val ioiLifecycleService: IoiLifecycleService)
     fun unblockStock(stock: String)
     {
         blockedStocks.remove(stock)
+        deletePersisted("STOCK", stock)
         logger.info("Unblocked stock: {}", stock)
     }
 
-    fun blockMarket(market: String)
+    fun blockMarket(market: String, userId: String)
     {
-        blockedMarkets.add(market)
+        blockedMarkets[market] = persistBlock("MARKET", market, userId)
         val cancelled = ioiLifecycleService.cancelMatching { it.originalMarket == market }
         logger.info("Blocked market: {}; cancelled {} live IOIs", market, cancelled)
     }
@@ -60,22 +80,28 @@ class IoiBlockingService(private val ioiLifecycleService: IoiLifecycleService)
     fun unblockMarket(market: String)
     {
         blockedMarkets.remove(market)
+        deletePersisted("MARKET", market)
         logger.info("Unblocked market: {}", market)
     }
 
     fun getBlockedTraders(): Set<String>
     {
-        return blockedTraders.toSet()
+        return blockedTraders.keys.toSet()
     }
 
     fun getBlockedStocks(): Set<String>
     {
-        return blockedStocks.toSet()
+        return blockedStocks.keys.toSet()
     }
 
     fun getBlockedMarkets(): Set<String>
     {
-        return blockedMarkets.toSet()
+        return blockedMarkets.keys.toSet()
+    }
+
+    fun getAllBlocks(): List<IoiBlock>
+    {
+        return blockedTraders.values + blockedStocks.values + blockedMarkets.values
     }
 
     fun recordBlockedTrader(request: IoiRequest, reason: String)
@@ -128,6 +154,43 @@ class IoiBlockingService(private val ioiLifecycleService: IoiLifecycleService)
         return blockedByTraderFailures.map { toBlocked(it, "TRADER") } +
             blockedByStockFailures.map { toBlocked(it, "STOCK") } +
             blockedByMarketFailures.map { toBlocked(it, "MARKET") }
+    }
+
+    private fun persistBlock(blockType: String, value: String, userId: String): IoiBlock
+    {
+        val block = IoiBlock.of(blockType, value, userId)
+        try
+        {
+            return ioiBlockRepository.save(block)
+        }
+        catch (e: Exception)
+        {
+            logger.error("Failed to persist IOI block {} {}: {}", blockType, value, e.message)
+            return block
+        }
+    }
+
+    private fun deletePersisted(blockType: String, value: String)
+    {
+        try
+        {
+            ioiBlockRepository.deleteById("$blockType:$value")
+        }
+        catch (e: Exception)
+        {
+            logger.error("Failed to delete persisted IOI block {} {}: {}", blockType, value, e.message)
+        }
+    }
+
+    private fun putInCache(block: IoiBlock)
+    {
+        when (block.blockType)
+        {
+            "TRADER" -> blockedTraders[block.value] = block
+            "STOCK" -> blockedStocks[block.value] = block
+            "MARKET" -> blockedMarkets[block.value] = block
+            else -> logger.warn("Ignoring persisted IOI block with unknown type: {}", block.blockType)
+        }
     }
 
     private fun toBlocked(failure: IoiFailure, blockType: String): IoiBlockedFailure

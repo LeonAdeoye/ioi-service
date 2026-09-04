@@ -1,5 +1,6 @@
 package com.leon.controller
 
+import com.leon.model.IoiBlock
 import com.leon.model.IoiBlockedFailure
 import com.leon.model.IoiFailure
 import com.leon.service.IoiBlockingService
@@ -17,11 +18,17 @@ class IoiBlockingController(private val ioiBlockingService: IoiBlockingService)
 {
     private val logger = LoggerFactory.getLogger(IoiBlockingController::class.java)
 
-    @PostMapping("/trader")
-    fun blockTrader(@RequestParam trader: String)
+    @GetMapping
+    fun getAllBlocks(): List<IoiBlock>
     {
-        logger.info("Received request to block trader: {}", trader)
-        ioiBlockingService.blockTrader(trader)
+        return ioiBlockingService.getAllBlocks()
+    }
+
+    @PostMapping("/trader")
+    fun blockTrader(@RequestParam trader: String, @RequestParam(defaultValue = "") userId: String)
+    {
+        logger.info("Received request to block trader: {} by user: {}", trader, userId)
+        ioiBlockingService.blockTrader(trader, userId)
     }
 
     @DeleteMapping("/trader")
@@ -32,10 +39,10 @@ class IoiBlockingController(private val ioiBlockingService: IoiBlockingService)
     }
 
     @PostMapping("/stock")
-    fun blockStock(@RequestParam stock: String)
+    fun blockStock(@RequestParam stock: String, @RequestParam(defaultValue = "") userId: String)
     {
-        logger.info("Received request to block stock: {}", stock)
-        ioiBlockingService.blockStock(stock)
+        logger.info("Received request to block stock: {} by user: {}", stock, userId)
+        ioiBlockingService.blockStock(stock, userId)
     }
 
     @DeleteMapping("/stock")
@@ -46,10 +53,10 @@ class IoiBlockingController(private val ioiBlockingService: IoiBlockingService)
     }
 
     @PostMapping("/market")
-    fun blockMarket(@RequestParam market: String)
+    fun blockMarket(@RequestParam market: String, @RequestParam(defaultValue = "") userId: String)
     {
-        logger.info("Received request to block market: {}", market)
-        ioiBlockingService.blockMarket(market)
+        logger.info("Received request to block market: {} by user: {}", market, userId)
+        ioiBlockingService.blockMarket(market, userId)
     }
 
     @DeleteMapping("/market")
