@@ -30,7 +30,7 @@ class IoiStatsService
         increment(createdByMarket, request.originalMarket)
     }
 
-    fun recordUnapproved(request: IoiRequest, reason: String)
+    fun recordUnapproved(request: IoiRequest, reason: String, lastPrice: Double? = null, advPercentage: Double? = null)
     {
         totalUnapproved.incrementAndGet()
         increment(unapprovedByTrader, request.trader)
@@ -45,7 +45,11 @@ class IoiStatsService
                 originalMarket = request.originalMarket,
                 reason = reason,
                 timestamp = request.timestamp,
-                source = request.source
+                source = request.source,
+                quantity = request.quantity,
+                price = request.price,
+                lastPrice = lastPrice,
+                advPercentage = advPercentage
             )
         )
     }

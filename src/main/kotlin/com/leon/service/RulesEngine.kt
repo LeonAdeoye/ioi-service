@@ -49,7 +49,8 @@ class RulesEngine(
         val resolved = resolveRequest(request)
         logger.info("Processing IOI request {} for {} qty={} side={} lifetime={}", resolved.requestId, resolved.ric, resolved.quantity, resolved.side, resolved.lifeTimeInMinutes)
 
-        val evaluation = evaluateRules(resolved)
+        val evaluated = evaluateRules(resolved)
+        val evaluation = evaluated.evaluation
 
         return if (evaluation.approved)
         {
@@ -69,7 +70,7 @@ class RulesEngine(
         {
             lastPriceService.releaseIfUnused(resolved.ric)
             val reason = evaluation.reason ?: "Request did not meet criteria"
-            ioiStatsService.recordUnapproved(resolved, reason)
+            ioiStatsService.recordUnapproved(resolved, reason, evaluated.marketPrice, evaluated.advPercentage)
             logger.info("Rejected IOI request {}: {}", resolved.requestId, reason)
             IoiResponse(
                 requestId = resolved.requestId.toString(),
@@ -103,7 +104,7 @@ class RulesEngine(
         logger.info("Registered live IOI {} for regeneration in {} minute(s)", request.requestId, lifetime)
     }
 
-    private fun evaluateRules(request: IoiRequest): RuleEvaluation
+    private fun evaluateRules(request: IoiRequest): EvaluatedIoi
     {
         val adv = pricingServiceClient.getAdv(request.ric)
         val marketPrice = lastPriceService.ensurePrice(request.ric)
@@ -147,8 +148,14 @@ class RulesEngine(
 
         val engine = DefaultRulesEngine(RulesEngineParameters().skipOnFirstAppliedRule(true))
         engine.fire(rules, facts)
-        return evaluation
+        return EvaluatedIoi(evaluation, marketPrice, advPercentage)
     }
+
+    private data class EvaluatedIoi(
+        val evaluation: RuleEvaluation,
+        val marketPrice: Double?,
+        val advPercentage: Double?
+    )
 
     private fun generateIoi(request: IoiRequest): Ioi
     {

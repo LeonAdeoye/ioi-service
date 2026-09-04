@@ -224,7 +224,9 @@ class IoiBlockingService(private val ioiLifecycleService: IoiLifecycleService, p
                 originalMarket = request.originalMarket,
                 reason = reason,
                 timestamp = request.timestamp,
-                source = request.source
+                source = request.source,
+                quantity = request.quantity,
+                price = request.price
             )
         )
         logger.info("IOI request {} blocked: {}", request.requestId, reason)

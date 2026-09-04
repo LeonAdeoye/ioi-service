@@ -7,5 +7,9 @@ data class IoiFailure(
     val originalMarket: String,
     val reason: String,
     val timestamp: Long,
-    val source: String
+    val source: String,
+    val quantity: Long,
+    val price: Double?,
+    val lastPrice: Double? = null,
+    val advPercentage: Double? = null
 )
