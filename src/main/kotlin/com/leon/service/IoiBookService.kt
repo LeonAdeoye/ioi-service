@@ -6,13 +6,14 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
-class IoiBookService
+class IoiBookService(private val lastPriceService: LastPriceService)
 {
     private val created = ConcurrentHashMap<UUID, Ioi>()
 
     fun add(ioi: Ioi)
     {
         created[ioi.requestId] = ioi.copy(status = "LIVE", cancelReason = null)
+        lastPriceService.onLiveAdded(ioi.ric)
     }
 
     fun get(requestId: UUID): Ioi?
@@ -28,6 +29,7 @@ class IoiBookService
     fun getLive(): List<Ioi>
     {
         return created.values.filter { it.status == "LIVE" }.distinctBy { it.requestId }
+            .map { it.copy(lastPrice = lastPriceService.getCached(it.ric)) }
     }
 
     fun getManuallyCancelled(): List<Ioi>
@@ -38,6 +40,9 @@ class IoiBookService
     fun markCancelled(requestId: UUID, manual: Boolean = false): Ioi?
     {
         val current = created[requestId] ?: return null
+        if (current.status == "LIVE")
+            lastPriceService.onLiveRemoved(current.ric)
+
         if (manual)
         {
             val cancelled = current.copy(status = "CANCELLED", cancelReason = MANUAL)
@@ -51,12 +56,16 @@ class IoiBookService
 
     fun clearLive()
     {
+        val liveRics = created.values.filter { it.status == "LIVE" }.map { it.ric }
         created.entries.removeIf { it.value.status == "LIVE" }
+        liveRics.forEach { lastPriceService.onLiveRemoved(it) }
     }
 
     fun clear()
     {
+        val liveRics = created.values.filter { it.status == "LIVE" }.map { it.ric }
         created.clear()
+        liveRics.forEach { lastPriceService.onLiveRemoved(it) }
     }
 
     companion object

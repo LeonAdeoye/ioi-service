@@ -6,6 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 class IoiProperties
 {
     var pricingServiceUrl: String = "http://localhost:20015"
+    var marketServiceUrl: String = "http://localhost:20019"
     var exchangeServiceUrl: String = "http://localhost:20014"
     var domainServiceUrl: String = "http://localhost:20009"
     var configurationServiceUrl: String = "http://localhost:20001"

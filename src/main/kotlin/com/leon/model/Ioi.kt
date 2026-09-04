@@ -20,5 +20,6 @@ data class Ioi(
     val fixMessage: String,
     val source: String,
     val status: String = "LIVE",
-    val cancelReason: String? = null
+    val cancelReason: String? = null,
+    val lastPrice: Double? = null
 )

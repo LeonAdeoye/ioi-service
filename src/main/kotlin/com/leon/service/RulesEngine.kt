@@ -38,7 +38,8 @@ class RulesEngine(
     private val ioiStatsService: IoiStatsService,
     private val ioiBlockingService: IoiBlockingService,
     private val liveIoiRegistry: LiveIoiRegistry,
-    private val ioiBookService: IoiBookService
+    private val ioiBookService: IoiBookService,
+    private val lastPriceService: LastPriceService
 )
 {
     private val logger = LoggerFactory.getLogger(RulesEngine::class.java)
@@ -66,6 +67,7 @@ class RulesEngine(
         }
         else
         {
+            lastPriceService.releaseIfUnused(resolved.ric)
             val reason = evaluation.reason ?: "Request did not meet criteria"
             ioiStatsService.recordUnapproved(resolved, reason)
             logger.info("Rejected IOI request {}: {}", resolved.requestId, reason)
@@ -104,11 +106,10 @@ class RulesEngine(
     private fun evaluateRules(request: IoiRequest): RuleEvaluation
     {
         val adv = pricingServiceClient.getAdv(request.ric)
-        val marketPrice = pricingServiceClient.getClosePrice(request.ric)
-        val priceForNotional = request.price ?: marketPrice
+        val marketPrice = lastPriceService.ensurePrice(request.ric)
         val currency = marketHoursService.currencyFor(request.originalMarket)
-        val notionalUsd = if (priceForNotional != null)
-            exchangeServiceClient.convertToUsd(request.quantity * priceForNotional, currency)
+        val notionalUsd = if (marketPrice != null)
+            exchangeServiceClient.convertToUsd(request.quantity * marketPrice, currency)
         else
             null
         val advPercentage = if (adv != null && adv > 0L)
