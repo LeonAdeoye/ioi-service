@@ -1,6 +1,7 @@
 package com.leon.model
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 import java.util.UUID
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -11,6 +12,8 @@ data class IoiRequest(
     val side: Side,
     val price: Double?,
     val clientIds: List<String> = emptyList(),
+    @param:JsonProperty("BloombergQualifier")
+    @get:JsonProperty("BloombergQualifier")
     val BloombergQualifier: String = "",
     val timestamp: Long,
     val lifeTimeInMinutes: Long? = null,
