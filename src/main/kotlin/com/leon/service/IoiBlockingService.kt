@@ -46,7 +46,8 @@ class IoiBlockingService(private val ioiLifecycleService: IoiLifecycleService, p
     {
         blockedTraders[trader] = persistBlock("TRADER", trader, userId)
         val cancelled = ioiLifecycleService.cancelMatching { it.trader == trader }
-        logger.info("Blocked trader: {}; cancelled {} live IOIs", trader, cancelled)
+        cancelled.forEach { recordBlockedTrader(it, "Blocked: trader '${trader}' is blocked") }
+        logger.info("Blocked trader: {}; blocked {} live IOIs", trader, cancelled.size)
     }
 
     fun unblockTrader(trader: String)
@@ -60,7 +61,8 @@ class IoiBlockingService(private val ioiLifecycleService: IoiLifecycleService, p
     {
         blockedStocks[stock] = persistBlock("STOCK", stock, userId)
         val cancelled = ioiLifecycleService.cancelMatching { it.ric == stock }
-        logger.info("Blocked stock: {}; cancelled {} live IOIs", stock, cancelled)
+        cancelled.forEach { recordBlockedStock(it, "Blocked: stock '${stock}' is blocked") }
+        logger.info("Blocked stock: {}; blocked {} live IOIs", stock, cancelled.size)
     }
 
     fun unblockStock(stock: String)
@@ -74,7 +76,8 @@ class IoiBlockingService(private val ioiLifecycleService: IoiLifecycleService, p
     {
         blockedMarkets[market] = persistBlock("MARKET", market, userId)
         val cancelled = ioiLifecycleService.cancelMatching { it.originalMarket == market }
-        logger.info("Blocked market: {}; cancelled {} live IOIs", market, cancelled)
+        cancelled.forEach { recordBlockedMarket(it, "Blocked: market '${market}' is blocked") }
+        logger.info("Blocked market: {}; blocked {} live IOIs", market, cancelled.size)
     }
 
     fun unblockMarket(market: String)
