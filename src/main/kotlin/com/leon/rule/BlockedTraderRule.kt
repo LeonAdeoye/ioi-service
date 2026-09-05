@@ -22,6 +22,6 @@ class BlockedTraderRule
     {
         val reason = "Blocked: trader '${request.trader}' is blocked"
         blockingService.recordBlockedTrader(request, reason)
-        evaluation.reject(reason)
+        evaluation.rejectBlocked(reason)
     }
 }

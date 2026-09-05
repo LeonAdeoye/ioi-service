@@ -22,6 +22,6 @@ class BlockedStockRule
     {
         val reason = "Blocked: stock '${request.ric}' is blocked"
         blockingService.recordBlockedStock(request, reason)
-        evaluation.reject(reason)
+        evaluation.rejectBlocked(reason)
     }
 }

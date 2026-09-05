@@ -22,6 +22,6 @@ class BlockedMarketRule
     {
         val reason = "Blocked: market '${request.originalMarket}' is blocked"
         blockingService.recordBlockedMarket(request, reason)
-        evaluation.reject(reason)
+        evaluation.rejectBlocked(reason)
     }
 }

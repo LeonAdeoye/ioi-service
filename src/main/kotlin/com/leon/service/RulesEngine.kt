@@ -70,7 +70,8 @@ class RulesEngine(
         {
             lastPriceService.releaseIfUnused(resolved.ric)
             val reason = evaluation.reason ?: "Request did not meet criteria"
-            ioiStatsService.recordUnapproved(resolved, reason, evaluated.marketPrice, evaluated.advPercentage)
+            if (!evaluation.blocked)
+                ioiStatsService.recordUnapproved(resolved, reason, evaluated.marketPrice, evaluated.advPercentage)
             logger.info("Rejected IOI request {}: {}", resolved.requestId, reason)
             IoiResponse(
                 requestId = resolved.requestId.toString(),

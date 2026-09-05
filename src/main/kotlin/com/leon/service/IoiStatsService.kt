@@ -96,12 +96,12 @@ class IoiStatsService
 
     fun getUnapprovedByReason(): Map<String, Long>
     {
-        return snapshot(unapprovedByReason)
+        return snapshot(unapprovedByReason).filterKeys { !it.startsWith(BLOCKED_REASON_PREFIX) }
     }
 
     fun getFailures(): List<IoiFailure>
     {
-        return failures.toList()
+        return failures.filter { !it.reason.startsWith(BLOCKED_REASON_PREFIX) }
     }
 
     private fun increment(map: ConcurrentHashMap<String, AtomicLong>, key: String)
@@ -112,5 +112,10 @@ class IoiStatsService
     private fun snapshot(map: ConcurrentHashMap<String, AtomicLong>): Map<String, Long>
     {
         return map.mapValues { it.value.get() }
+    }
+
+    companion object
+    {
+        private const val BLOCKED_REASON_PREFIX = "Blocked:"
     }
 }
